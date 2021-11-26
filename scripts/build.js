@@ -6,13 +6,12 @@ const { createClientBuildConfig, getPath } = require("./utils");
 fs.ensureDir(getPath("out"));
 const build = async () => {
 
-  const vditorWatcher = vite.build(createClientBuildConfig("vditor"));
-  const milkdownWatcher = vite.build(createClientBuildConfig("milkdown"));
+  vite.build(createClientBuildConfig("memo"));
 
   const hostBuilder = execa("npm", ["run", "build:host"]);
   hostBuilder.stdout.pipe(process.stdout);
 
-  return { vditorBuilder, milkdownBuilder, hostBuilder };
+  return { hostBuilder };
 };
 
 build();
