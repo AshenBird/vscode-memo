@@ -1,7 +1,11 @@
 import * as vscode from 'vscode';
-import { createMemo } from "./Memo";
-export const createExtensions = (context: vscode.ExtensionContext)=>{
+import { commandsRegister } from './commands';
+import { ConfigController } from './ConfigController';
+import { createSidebar } from "./Sidebar";
+export const createExtensions = async (context: vscode.ExtensionContext)=>{
 	console.log("Create Mcswift Extensions");
-	createMemo(context);
+	const configController = await new ConfigController(context);
+	commandsRegister(context);
+	createSidebar(context, configController);
 };
 

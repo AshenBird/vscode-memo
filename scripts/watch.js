@@ -6,7 +6,7 @@ const { createClientBuildConfig, getPath } = require("./utils");
 fs.ensureDir(getPath("out"));
 
 const watch = async () => {
-  const memoConfig = createClientBuildConfig("memo",{});
+  const memoConfig = createClientBuildConfig("sidebar",{});
   vite.build(memoConfig);
   const hostWatcher = execa("npm", ["run", "watch:host"]);
   hostWatcher.stdout.pipe(process.stdout);
