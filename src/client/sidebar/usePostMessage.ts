@@ -1,10 +1,11 @@
 import { ref, provide } from "vue";
+import { Memo } from "./interface";
 
 // @ts-ignore
 const vscode = acquireVsCodeApi();
 export const usePostMessage = ()=>{
   
-  const data = ref<{memo:unknown[], todo:unknown[]}>({
+  const data = ref<{memo:Memo[], todo:unknown[]}>({
     memo:[],
     todo:[]
   });

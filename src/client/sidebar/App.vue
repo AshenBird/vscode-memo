@@ -10,12 +10,12 @@ import {
   NIcon,
 } from "naive-ui";
 import {
-  // EllipsisHorizontal,
   Add as AddIcon,
   CloseCircleOutline,
 } from "@vicons/ionicons5";
 import { usePostMessage } from "./usePostMessage";
 import { computed } from "vue";
+import MemoCard from "./Memo.vue"
 const { data, config, send } = usePostMessage();
 
 send("init");
@@ -40,26 +40,7 @@ const collapseClick = () => {
             ><n-icon><AddIcon /></n-icon
           ></n-button>
         </template>
-        <n-card header-style="padding: 0px !important">
-          <template #header>
-            <n-input
-              style="border-radius: 0; border-bottom: 1px solid #999"
-              placeholder="标题"
-            >
-              <template #suffix>
-                <n-button text #icon @click.stop="collapseClick"
-                  ><n-icon><CloseCircleOutline /></n-icon
-                ></n-button>
-              </template>
-            </n-input>
-          </template>
-          <n-input
-            style="border-radius: 0"
-            type="textarea"
-            :rows="8"
-            placeholder="内容"
-          />
-        </n-card>
+        <memo-card  v-for="item of data.memo" :data="item" :key="item.key"/>
         <n-button style="width: 100%; margin-top: 10px">添加</n-button>
       </n-collapse-item>
     </n-collapse>
@@ -68,5 +49,9 @@ const collapseClick = () => {
 <style>
 .memos .n-card > .n-card__content {
   padding: 0 !important;
+}
+.memo-header{
+  display: flex;
+  justify-content: space-between;
 }
 </style>

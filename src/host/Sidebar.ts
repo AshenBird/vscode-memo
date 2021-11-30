@@ -1,6 +1,6 @@
 import {
   CancellationToken,
-  commands,
+  // commands,
   Disposable,
   Event,
   EventEmitter,
@@ -75,7 +75,6 @@ export class Sidebar implements Disposable, WebviewViewProvider {
 
     // 监听视图事件
     this._webview.webview.onDidReceiveMessage((message: any) => {
-      console.log(message);
       if (message.type) {
         switch(message.type){
           case "init":
@@ -170,7 +169,6 @@ export class Sidebar implements Disposable, WebviewViewProvider {
     if(this.configController.isNoteMode){
       this.createPrivateDoc();
     }
-    console.log("主题", window.activeColorTheme.kind);
     this.send("config", {
       theme: ({
         1: "light",
@@ -178,7 +176,6 @@ export class Sidebar implements Disposable, WebviewViewProvider {
         3: "light", //HighContrast
       }[window.activeColorTheme.kind]),
     });
-    // this._webview?.webview.postMessage
   }
 }
 export const createSidebar = (context: ExtensionContext, configController:ConfigController) => {
