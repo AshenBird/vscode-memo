@@ -16,6 +16,8 @@ import {
   WorkspaceFolder
 } from "vscode";
 
+import {snip, SnipEmitter} from "./modules/Snip";
+
 import { StringDecoder } from "string_decoder";
 import * as path from "path";
 import { UniKey } from "./UniKey";
@@ -35,6 +37,8 @@ export class Sidebar implements Disposable, WebviewViewProvider {
   private template: string = "";
   private memoDoc?:TextDocument;
   private todoDoc?:TextDocument;
+  private memoMap=new Map();
+  private memoKeys=new UniKey();
   constructor(private readonly context: ExtensionContext, private configController:ConfigController) {}
 
   public async refresh() {
@@ -78,7 +82,22 @@ export class Sidebar implements Disposable, WebviewViewProvider {
       if (message.type) {
         switch(message.type){
           case "init":
-              this.onViewInit();
+            this.onViewInit();
+            return;
+          case "add-memo":
+            return;
+          case "snip":
+            const p = snip();
+            // const snipEmitter = new SnipEmitter();
+            // snipEmitter.once("change",(o, n)=>{
+            //   console.log("change", o, n);
+            //   this.send("snipResult", n);
+            //   snipEmitter.close();
+            // });
+            p.addListener("exit",()=>{
+              this.send("snipBegin","");
+            });
+            return;
         }
       }
     });
@@ -98,7 +117,7 @@ export class Sidebar implements Disposable, WebviewViewProvider {
     // 初始化数据
     this.memoDoc = await this.getPrivateDoc("memo");
     this.todoDoc = await this.getPrivateDoc("todo");
-    this.updateData();
+    this.acquireData();
   }
 
   // 解构相关数据存储
@@ -111,8 +130,9 @@ export class Sidebar implements Disposable, WebviewViewProvider {
     this.todoDoc.save();
     this.todoDoc = undefined;
   }
-  private updateData(){
+  private acquireData(){
     if(!this.memoDoc||!this.todoDoc){return;}
+    // this.memoList = 
     this.send("memo",JSON.parse(this.memoDoc.getText()||'[]'));
     this.send("todo",JSON.parse(this.todoDoc.getText()||'[]'));
     // this._webview?.webview.postMessage();

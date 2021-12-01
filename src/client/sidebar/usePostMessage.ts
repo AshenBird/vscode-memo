@@ -10,6 +10,11 @@ export const usePostMessage = ()=>{
     todo:[]
   });
   const config = ref<Record<string,unknown>>({});
+  const status = ref<{
+    loading:boolean
+  }>({
+    loading:false
+  });
   provide("config",config);
   provide("data", data);
   const onMessage = (ev:MessageEvent)=>{
@@ -17,7 +22,6 @@ export const usePostMessage = ()=>{
       name:"config"|"memo"|"todo",
       payload:any
     };
-    console.log(name,payload);
     ({
       config(){
         config.value = payload;
@@ -27,6 +31,12 @@ export const usePostMessage = ()=>{
       },
       todo(){
         data.value.todo = payload||[];
+      },
+      snipBegin(){
+        status.value.loading = false;
+      },
+      snipResult(){
+        console.log(payload);
       }
     }[name])();
   };
@@ -38,5 +48,5 @@ export const usePostMessage = ()=>{
     });
   };
   window.addEventListener("message",onMessage);
-  return {data, config, send};
+  return {data, config, send, status};
 };

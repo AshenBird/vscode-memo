@@ -28,7 +28,7 @@ const del = ()=>{
 }
 
 const onInput = (content:string)=>{
-  emit("delete", {key:props.data.key, content});
+  emit("input", {key:props.data.key, content});
 }
 
 </script>

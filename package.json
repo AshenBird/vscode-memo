@@ -98,11 +98,14 @@
 		"sass": "^1.43.4",
 		"typescript": "^4.4.4",
 		"vite": "^2.6.14",
-		"vsce": "^2.5.0"
+		"vsce": "^2.5.0",
+		"zx": "^4.2.0"
 	},
 	"dependencies": {
 		"@vicons/ionicons5": "^0.11.0",
+		"axios": "^0.24.0",
 		"naive-ui": "^2.21.1",
+		"robotjs": "^0.6.0",
 		"vfonts": "^0.1.0",
 		"vue": "^3.2.22"
 	}
