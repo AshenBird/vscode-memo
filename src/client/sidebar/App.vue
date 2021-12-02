@@ -25,7 +25,7 @@ const theme = computed(() => {
   return null;
 });
 const collapseClick = () => {
-  console.log("a");
+  console.log("abbb");
 };
 const addMemo = () => {
   send("add-memo");

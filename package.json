@@ -2,7 +2,7 @@
 	"name": "notebook",
 	"displayName": "McSwift Notebook",
 	"description": "",
-	"version": "0.0.9",
+	"version": "0.0.10",
 	"engines": {
 		"vscode": "^1.62.3"
 	},
@@ -17,9 +17,9 @@
 	],
 	"contributes": {
 		"configuration": {
-			"title": "note",
+			"title": "mcswift note",
 			"properties": {
-				"note.turnOn": {
+				"mcswift.NoteMode": {
 					"type": "boolean",
 					"default": false
 				}
@@ -39,7 +39,7 @@
 			"activitybar": [
 				{
 					"id": "mcswift-notebook",
-					"title": "McNote",
+					"title": "Notebook",
 					"icon": "public/notebook.svg"
 				}
 			]
@@ -72,7 +72,6 @@
 		"build": "node scripts/build.js",
 		"watch": "node scripts/watch.js",
 		"watch:host": "cd src/host && tsc -watch -p ./",
-		"build:host": "cd src/host && tsc -p ./",
 		"pretest": "npm run compile && npm run lint",
 		"lint": "eslint src --ext ts",
 		"test": "node ./out/test/runTest.js"

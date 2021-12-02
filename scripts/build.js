@@ -5,8 +5,9 @@ const esbuild = require("esbuild");
 const { createClientBuildConfig, getPath } = require("./utils");
 
 fs.ensureDir(getPath("out"));
-const build = async () => {
 
+const build = async () => {
+  
   vite.build(createClientBuildConfig("sidebar"));
 
   esbuild.buildSync({
