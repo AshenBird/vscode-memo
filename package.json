@@ -2,7 +2,7 @@
 	"name": "notebook",
 	"displayName": "McSwift Notebook",
 	"description": "",
-	"version": "0.0.10",
+	"version": "0.0.11",
 	"engines": {
 		"vscode": "^1.62.3"
 	},
@@ -16,25 +16,6 @@
 		"onStartupFinished"
 	],
 	"contributes": {
-		"configuration": {
-			"title": "mcswift note",
-			"properties": {
-				"mcswift.NoteMode": {
-					"type": "boolean",
-					"default": false
-				}
-			}
-		},
-		"commands": [
-			{
-				"command": "mcswift.turnOnNoteMode",
-				"title": "McSwift: turn on note mode"
-			},
-			{
-				"command": "mcswift.turnOffNoteMode",
-				"title": "McSwift: turn off note mode"
-			}
-		],
 		"viewsContainers": {
 			"activitybar": [
 				{
@@ -47,8 +28,12 @@
 		"views": {
 			"mcswift-notebook": [
 				{
+					"id":"note-explorer",
+					"name": "目录"
+				},
+				{
 					"id": "mcswift-sidebar",
-					"name": "",
+					"name": "待办和便笺",
 					"type": "webview"
 				}
 			]
