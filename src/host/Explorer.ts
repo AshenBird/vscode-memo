@@ -79,14 +79,17 @@ export class NoteExplorerProvider implements vscode.TreeDataProvider<NoteItem> {
     return false;
   }
 }
-
+const iconMap:Record<string,vscode.ThemeIcon> = {
+  ".md":new vscode.ThemeIcon("markdown")
+};
 class NoteItem extends vscode.TreeItem {
+  
   public readonly label: string;
   // private version: string,
   public readonly collapsibleState: vscode.TreeItemCollapsibleState;
   public dir?: fs.Dir;
   public path: string;
-
+  
   constructor(option: {
     label: string;
     collapsibleState: vscode.TreeItemCollapsibleState;
@@ -100,6 +103,13 @@ class NoteItem extends vscode.TreeItem {
     this.path = option.path;
     if (this.collapsibleState === 0) {
       // this.command = ;
+      for (const [type, icon] of Object.entries(iconMap)) {
+        if(!this.label.endsWith(type)){continue;}
+        this.iconPath = icon;
+        break;
+      }
+    }else{
+      this.iconPath = vscode.ThemeIcon.Folder;
     }
     // this.tooltip = `${this.label}-${this.version}`;
     // this.description = this.version;
