@@ -1,14 +1,24 @@
-import * as vscode from "vscode";
+import {
+  workspace,
+  extensions,
+  ThemeIcon,
+  Uri,
+  commands,
+  TreeDataProvider,
+  window,
+  TreeItem,
+  EventEmitter,
+  Event,
+  TreeItemCollapsibleState,
+} from "vscode";
 import * as fs from "fs";
 import * as path from "path";
 
 const currentIconThemeConf = (() => {
-  const themeName = vscode.workspace
-    .getConfiguration()
-    .get("workbench.iconTheme");
+  const themeName = workspace.getConfiguration().get("workbench.iconTheme");
 
   const themes = [];
-  for (const ex of vscode.extensions.all) {
+  for (const ex of extensions.all) {
     const ts = ex.packageJSON?.contributes?.iconThemes;
     if (ts) {
       themes.push(...ts.map((t: any) => ({ theme: t, extension: ex })));
@@ -25,59 +35,68 @@ const currentIconThemeConf = (() => {
   );
 
   const c = JSON.parse(fs.readFileSync(themeConfPath, { encoding: "utf-8" }));
-  console.log(themeConfPath);
-  return {path: themeConfPath, ...c};
+  return { path: themeConfPath, ...c };
 })();
+
 const getIcon = (exn: string, name?: string) => {
   let iconName = currentIconThemeConf.fileExtensions[exn];
   if (iconName) {
     const { iconPath } = currentIconThemeConf.iconDefinitions[iconName];
-    
-    // console.log(path.resolve(currentIconThemeConf.path, "../",iconPath));
-    return vscode.Uri.file(path.resolve(currentIconThemeConf.path ,"../", iconPath));
+    return Uri.file(path.resolve(currentIconThemeConf.path, "../", iconPath));
   }
-  if(name){
-    return new vscode.ThemeIcon(name);
+  if (name) {
+    return new ThemeIcon(name);
   }
-  return new vscode.ThemeIcon("file");
+  return new ThemeIcon("file");
 };
-
-console.log("dio");
 
 const fileTypes = {
   md: {
-    icon: getIcon("md","markdown"),//new vscode.ThemeIcon("markdown"),
+    icon: getIcon("md", "markdown"), //new ThemeIcon("markdown"),
     selection: async (item: NoteItem) => {
-      const uri = vscode.Uri.file(item.path);
-      await vscode.commands.executeCommand("vscode.openWith", uri, "MarkSwift");
+      const uri = Uri.file(item.path);
+      await commands.executeCommand("vscode.openWith", uri, "MarkSwift");
     },
   },
   dio: {
     icon: getIcon("dio"),
     selection: async (item: NoteItem) => {
-      const uri = vscode.Uri.file(item.path);
-      await vscode.commands.executeCommand("vscode.open", uri);
+      const uri = Uri.file(item.path);
+      await commands.executeCommand("vscode.open", uri);
     },
   },
   pdf: {
     icon: getIcon("pdf"),
     selection: async (item: NoteItem) => {
-      const uri = vscode.Uri.file(item.path);
-      await vscode.commands.executeCommand("vscode.open", uri);
+      const uri = Uri.file(item.path);
+      await commands.executeCommand("vscode.open", uri);
     },
   },
 };
 
-export class NoteExplorerProvider implements vscode.TreeDataProvider<NoteItem> {
+export class NoteExplorerProvider implements TreeDataProvider<NoteItem> {
   static fileTypeMap = new Map(Object.entries(fileTypes));
   constructor() {
-    // console.log(extensions);
+    this.listen();
+  }
+  listen() {
+    const queue = [
+      workspace.onDidChangeWorkspaceFolders,
+      workspace.onDidCreateFiles,
+      workspace.onDidDeleteFiles,
+      workspace.onDidRenameFiles,
+    ];
+    queue.forEach(item=>{
+      item(()=>{
+        this.refresh();
+      });
+    });
   }
   async register() {
-    const noteExplorer = await vscode.window.createTreeView("note-explorer", {
-      treeDataProvider: new NoteExplorerProvider(),
+    const treeDataProvider = new NoteExplorerProvider();
+    const noteExplorer = await window.createTreeView("note-explorer", {
+      treeDataProvider
     });
-
     noteExplorer.onDidChangeSelection(async ({ selection }) => {
       if (selection.length === 0) {
         return;
@@ -88,16 +107,15 @@ export class NoteExplorerProvider implements vscode.TreeDataProvider<NoteItem> {
         NoteExplorerProvider.fileTypeMap.get(type)?.selection(item);
       }
     });
-
     return noteExplorer;
   }
-  getTreeItem(element: NoteItem): vscode.TreeItem {
+  getTreeItem(element: NoteItem): TreeItem {
     return element;
   }
 
   async getChildren(element?: NoteItem) {
     if (!element) {
-      const folders = vscode.workspace.workspaceFolders;
+      const folders = workspace.workspaceFolders;
       if (folders?.length) {
         return folders.map((item) => {
           const rootPath = item.uri.fsPath;
@@ -134,7 +152,12 @@ export class NoteExplorerProvider implements vscode.TreeDataProvider<NoteItem> {
         );
       }
       // dir.close();
-      return result;
+      return result.sort(({ collapsibleState: a }, { collapsibleState: b }) => {
+        if (a * b !== 0) {
+          return 0;
+        }
+        return b - a > 0 ? 1 : -1;
+      });
     }
     return [];
   }
@@ -162,17 +185,28 @@ export class NoteExplorerProvider implements vscode.TreeDataProvider<NoteItem> {
     }
     return false;
   }
+
+  private _onDidChangeTreeData: EventEmitter<
+    NoteItem | undefined | null | void
+  > = new EventEmitter<NoteItem | undefined | null | void>();
+  readonly onDidChangeTreeData: Event<NoteItem | undefined | null | void> =
+    this._onDidChangeTreeData.event;
+
+  refresh(): void {
+    this._onDidChangeTreeData.fire();
+  }
 }
-class NoteItem extends vscode.TreeItem {
+
+class NoteItem extends TreeItem {
   public readonly label: string;
   // private version: string,
-  public readonly collapsibleState: vscode.TreeItemCollapsibleState;
+  public readonly collapsibleState: TreeItemCollapsibleState;
   public dir?: fs.Dir;
   public path: string;
 
   constructor(option: {
     label: string;
-    collapsibleState: vscode.TreeItemCollapsibleState;
+    collapsibleState: TreeItemCollapsibleState;
     dir?: fs.Dir;
     path: string;
   }) {
@@ -186,7 +220,7 @@ class NoteItem extends vscode.TreeItem {
       const type = this.label.split(".").pop() as string;
       this.iconPath = NoteExplorerProvider.fileTypeMap.get(type)?.icon;
     } else {
-      this.iconPath = vscode.ThemeIcon.Folder;
+      this.iconPath = ThemeIcon.Folder;
     }
     // this.tooltip = `${this.label}-${this.version}`;
     // this.description = this.version;

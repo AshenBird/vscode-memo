@@ -17,6 +17,7 @@ const noteMap = new Map();
 export const createExtensions = async (context: vscode.ExtensionContext) => {
   createSidebar(context);
   const noteExplorer = await new NoteExplorerProvider().register();
+  context.subscriptions.push(noteExplorer);
   // {
   // 	"id": "mcswift-sidebar",
   // 	"name": "",
