@@ -15,11 +15,8 @@ export class SnipEmitter extends EventEmitter{
   async begin(){
     this.oldContent = await env.clipboard.readText();
     this.timer = setInterval( async ()=>{
-      console.log("listening");
       const currentContent = await env.clipboard.readText();
-      console.log(currentContent, this.oldContent);
       if(currentContent!==this.oldContent){
-        console.log("change");
         this.emit("change", currentContent );
         this.oldContent = currentContent;
       }

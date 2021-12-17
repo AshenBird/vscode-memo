@@ -8,7 +8,10 @@ fs.ensureDir(getPath("out"));
 
 const build = async () => {
   
-  vite.build(createClientBuildConfig("sidebar"));
+  // vite.build(createClientBuildConfig("sidebar"));
+  
+  const clientBuilder = execa("pnpm", ["run", "build:client"]);
+  clientBuilder.stdout.pipe(process.stdout);
 
   esbuild.buildSync({
     entryPoints: [getPath('./src/host/index.ts')],

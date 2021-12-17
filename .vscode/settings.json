@@ -16,6 +16,7 @@
     "typescript.tsc.autoDetect": "off",
     "explorerExclude.backup": null,
     "cSpell.words": [
+        "Drawio",
         "nord"
     ]
 }

@@ -1,6 +1,5 @@
 import * as vscode from "vscode";
-import { NoteExplorerProvider } from "./Explorer";
-import { createSidebar } from "./Sidebar";
+import { NoteExplorerWebview } from "./Explorer";
 
 export interface ExtensionsMap {
   markdown?: vscode.Extension<{ editor: MarkdownEditorProvider }>;
@@ -15,11 +14,7 @@ export interface MarkdownEditorProvider
 	
 const noteMap = new Map();
 export const createExtensions = async (context: vscode.ExtensionContext) => {
-  createSidebar(context);
-  const noteExplorer = await new NoteExplorerProvider().register();
-  // {
-  // 	"id": "mcswift-sidebar",
-  // 	"name": "",
-  // 	"type": "webview"
-  // }
+  const noteExplorer = new NoteExplorerWebview().register(context);
+  
+  context.subscriptions.push(noteExplorer);
 };

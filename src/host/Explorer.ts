@@ -1,199 +1,107 @@
-import * as vscode from "vscode";
+import { commands, Uri, WebviewView, workspace, window } from "vscode";
 import * as fs from "fs";
-import * as path from "path";
-
-const currentIconThemeConf = (() => {
-  const themeName = vscode.workspace
-    .getConfiguration()
-    .get("workbench.iconTheme");
-
-  const themes = [];
-  for (const ex of vscode.extensions.all) {
-    const ts = ex.packageJSON?.contributes?.iconThemes;
-    if (ts) {
-      themes.push(...ts.map((t: any) => ({ theme: t, extension: ex })));
-    }
-  }
-  const currentTheme = themes.find((item) => item.theme.id === themeName);
-
-  const currentThemeExtensionPath = currentTheme.extension.extensionPath;
-  const currentThemeConfPath = currentTheme.theme.path;
-
-  const themeConfPath = path.join(
-    currentThemeExtensionPath,
-    currentThemeConfPath
-  );
-
-  const c = JSON.parse(fs.readFileSync(themeConfPath, { encoding: "utf-8" }));
-  console.log(themeConfPath);
-  return {path: themeConfPath, ...c};
-})();
-const getIcon = (exn: string, name?: string) => {
-  let iconName = currentIconThemeConf.fileExtensions[exn];
-  if (iconName) {
-    const { iconPath } = currentIconThemeConf.iconDefinitions[iconName];
-    
-    // console.log(path.resolve(currentIconThemeConf.path, "../",iconPath));
-    return vscode.Uri.file(path.resolve(currentIconThemeConf.path ,"../", iconPath));
-  }
-  if(name){
-    return new vscode.ThemeIcon(name);
-  }
-  return new vscode.ThemeIcon("file");
-};
-
-console.log("dio");
+import * as Path from "path";
+import { CustomView } from "./Webview";
 
 const fileTypes = {
   md: {
-    icon: getIcon("md","markdown"),//new vscode.ThemeIcon("markdown"),
-    selection: async (item: NoteItem) => {
-      const uri = vscode.Uri.file(item.path);
-      await vscode.commands.executeCommand("vscode.openWith", uri, "MarkSwift");
+    selection: async (path: string) => {
+      const uri = Uri.file(path);
+      await commands.executeCommand("vscode.openWith", uri, "MarkSwift");
     },
   },
-  dio: {
-    icon: getIcon("dio"),
-    selection: async (item: NoteItem) => {
-      const uri = vscode.Uri.file(item.path);
-      await vscode.commands.executeCommand("vscode.open", uri);
-    },
-  },
-  pdf: {
-    icon: getIcon("pdf"),
-    selection: async (item: NoteItem) => {
-      const uri = vscode.Uri.file(item.path);
-      await vscode.commands.executeCommand("vscode.open", uri);
+  default: {
+    selection: async (path: string) => {
+      const uri = Uri.file(path);
+      await commands.executeCommand("vscode.open", uri);
     },
   },
 };
 
-export class NoteExplorerProvider implements vscode.TreeDataProvider<NoteItem> {
-  static fileTypeMap = new Map(Object.entries(fileTypes));
+const extNames = ["md","pdf","dio","drawio","epub",];
+interface DirTree {
+  label: string;
+  type: string;
+  children?: DirTree[];
+  key: string;
+}
+export class NoteExplorerWebview extends CustomView {
   constructor() {
-    // console.log(extensions);
-  }
-  async register() {
-    const noteExplorer = await vscode.window.createTreeView("note-explorer", {
-      treeDataProvider: new NoteExplorerProvider(),
-    });
+    super("explorer");
+    this.events = {
+      init: (webviewView) => {
+        this.update(webviewView);
 
-    noteExplorer.onDidChangeSelection(async ({ selection }) => {
-      if (selection.length === 0) {
-        return;
-      }
-      const item = selection[0];
-      if (item.collapsibleState === 0) {
-        const type = item.label.split(".").pop() as string;
-        NoteExplorerProvider.fileTypeMap.get(type)?.selection(item);
-      }
-    });
-
-    return noteExplorer;
-  }
-  getTreeItem(element: NoteItem): vscode.TreeItem {
-    return element;
-  }
-
-  async getChildren(element?: NoteItem) {
-    if (!element) {
-      const folders = vscode.workspace.workspaceFolders;
-      if (folders?.length) {
-        return folders.map((item) => {
-          const rootPath = item.uri.fsPath;
-          return new NoteItem({
-            label: item.name,
-            collapsibleState: 2,
-            path: rootPath,
+        const updateQueue = [
+          workspace.onDidChangeWorkspaceFolders,
+          workspace.onDidCreateFiles,
+          workspace.onDidDeleteFiles,
+          workspace.onDidRenameFiles,
+        ];
+        updateQueue.forEach((item) => {
+          item(() => {
+            this.update(webviewView);
           });
         });
-      }
-    }
-    if (element?.collapsibleState === 0) {
-      return [];
-    }
-    if (element) {
-      const dir = fs.opendirSync(element.path);
-      const result = [];
-      for await (const dirent of dir) {
-        const name = dirent.name;
-
-        const _path = path.join(element.path, dirent.name);
-
-        if (!(await this.check(dirent, _path))) {
-          continue;
+      },
+      change: (webviewView, message) => {
+        const { type, path } = message.data;
+        if(Object.keys(fileTypes).includes(type)){
+          // @ts-ignore
+          fileTypes[type].selection(path);
+        }else{
+          fileTypes["default"].selection(path);
         }
-
-        // 如果是文件夹，要预检
-        result.push(
-          new NoteItem({
-            label: name,
-            collapsibleState: dirent.isFile() ? 0 : 1,
-            path: _path,
-          })
-        );
-      }
-      // dir.close();
+        
+      },
+    };
+  }
+  async getTree() {
+    const result: DirTree[] = [];
+    const { workspaceFolders } = workspace;
+    if (!workspaceFolders?.length) {
       return result;
     }
-    return [];
+
+    for (const folder of workspaceFolders) {
+      result.push(await this.plant(folder.uri.fsPath, folder.name, true));
+    }
+    return result;
   }
-  async check(dirent: fs.Dirent, p: string) {
-    const name = dirent.name;
-    const fileArg = () => {
-      const suffix = name.split(".").pop();
-      if (!suffix) {
-        return false;
-      }
-      return NoteExplorerProvider.fileTypeMap.has(suffix);
+  private async plant(path: string, name: string, isFolder: boolean) {
+    const r: DirTree = {
+      label: name,
+      type: "",
+      key: path,
     };
-    if (dirent.isFile() && fileArg()) {
-      return true;
-    }
-
-    if (dirent.isDirectory()) {
-      //   const dir = fs.opendirSync(p);
-      //   const _p = dir.path;
-      //   // 开始递归遍历，只要找到一个就行
-      //   for await (const _dn of fs.opendirSync(p)) {
-      //     if (await this.check(_dn, path.join(_p, _dn.name))) { return true; }
-      //   };
-      return true;
-    }
-    return false;
-  }
-}
-class NoteItem extends vscode.TreeItem {
-  public readonly label: string;
-  // private version: string,
-  public readonly collapsibleState: vscode.TreeItemCollapsibleState;
-  public dir?: fs.Dir;
-  public path: string;
-
-  constructor(option: {
-    label: string;
-    collapsibleState: vscode.TreeItemCollapsibleState;
-    dir?: fs.Dir;
-    path: string;
-  }) {
-    super(option.label, option.collapsibleState);
-    this.label = option.label;
-    this.collapsibleState = option.collapsibleState;
-    this.dir = option.dir;
-    this.path = option.path;
-    if (this.collapsibleState === 0) {
-      // this.command = ;
-      const type = this.label.split(".").pop() as string;
-      this.iconPath = NoteExplorerProvider.fileTypeMap.get(type)?.icon;
+    if (isFolder) {
+      r.type = "folder";
+      const dir = fs.opendirSync(path);
+      r.children = [] as DirTree[];
+      for await (const dirent of dir) {
+        const ns = dirent.name.split(".");
+        const suffix = ns.pop();
+        const isDirectory = dirent.isDirectory();
+        if (
+          !isDirectory &&
+          (ns.length === 0 || !suffix || !extNames.includes(suffix))
+        ) {
+          continue;
+        }
+        r.children.push(
+          await this.plant(
+            Path.join(path, dirent.name),
+            dirent.name,
+            isDirectory
+          )
+        );
+      }
     } else {
-      this.iconPath = vscode.ThemeIcon.Folder;
+      r.type = name.split(".").pop() as keyof typeof fileTypes;
     }
-    // this.tooltip = `${this.label}-${this.version}`;
-    // this.description = this.version;
+    return r;
   }
-
-  // iconPath = {
-  //   light: path.join(__filename, '..', '..', 'resources', 'light', 'NoteItem.svg'),
-  //   dark: path.join(__filename, '..', '..', 'resources', 'dark', 'NoteItem.svg')
-  // };
+  async update(webviewView: WebviewView) {
+    this.send(webviewView.webview, "tree", await this.getTree());
+  }
 }

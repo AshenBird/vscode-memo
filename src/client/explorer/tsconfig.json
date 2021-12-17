@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "Node",
+    "strict": true,
+    "allowJs": true,
+    "resolveJsonModule": true,
+    "rootDir": "./",
+    "outDir": "../../out/client/milkdown",
+    "allowSyntheticDefaultImports": true,
+    "jsx": "preserve",
+    "lib": [
+      "DOM"
+    ],
+    "types": [
+      "node","vite/client"
+    ]
+  },
+  "exclude": []
+}

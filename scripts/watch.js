@@ -7,7 +7,7 @@ fs.ensureDir(getPath("out"));
 
 const watch = async () => {
   
-  vite.build(createClientBuildConfig("sidebar",{}));
+  vite.build(createClientBuildConfig("explorer",{}));
 
   const hostWatcher = execa("npm", ["run", "watch:host"]);
   hostWatcher.stdout.pipe(process.stdout);
