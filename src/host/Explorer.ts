@@ -32,6 +32,7 @@ export class NoteExplorerWebview extends CustomView {
       init: (webviewView) => {
         this.update(webviewView);
 
+        // @todo 这个地方要优化监听，直接从文件系统发生的变更无法监听到，这里只能监听在vscode内进行的变更
         const updateQueue = [
           workspace.onDidChangeWorkspaceFolders,
           workspace.onDidCreateFiles,
