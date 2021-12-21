@@ -7,7 +7,7 @@ import {
   Markdown as MDIcon,
 } from "@vicons/fa";
 import { useVscode } from "./useVscode";
-import { computed, ref, VNodeChild } from "vue";
+import { computed, nextTick, ref, VNodeChild } from "vue";
 import { TreeRenderProps, TreeOption } from "naive-ui/lib/tree/src/interface";
 import DrawioIcon from "./icons/DrawioIcon.vue";
 
@@ -28,7 +28,7 @@ const iconMap: Record<NodeType, VNodeChild> = {
   epub: <BookIcon />,
 };
 const { config, send, status, listeners, hasInit } = useVscode();
-const tree = ref([]);
+const tree = ref<DirTree[]>([]);
 
 // 活动的节点控制
 const actives = ref<string[]>([]);
@@ -41,6 +41,12 @@ const onActiveChange = (
   send("change", { type, path: key });
 };
 
+
+const expandKeys = ref<(string|number)[]>([]);
+const onExpendChange = (keys:(string|number)[])=>{
+  expandKeys.value = keys
+}
+
 //
 const theme = computed(() => {
   if (config.value.theme === "dark") {
@@ -49,8 +55,10 @@ const theme = computed(() => {
   return null;
 });
 
-listeners.value.set("tree", (ev) => {
+listeners.value.set("tree", async (ev) => {
   tree.value = ev.data.payload;
+  await nextTick()
+  expandKeys.value.push(tree.value[0].key)
 });
 
 hasInit.value = true;
@@ -67,8 +75,10 @@ const renderSuffix = () => <div></div>;
     <n-spin :show="status.loading">
       <div style="min-height: 100vh">
         <n-tree
+          :expanded-keys="expandKeys"
           :selected-keys="actives"
           @update:selected-keys="onActiveChange"
+          @update:expanded-keys="onExpendChange"
           :render-prefix="renderPrefix"
           :render-label="renderLabel"
           :render-suffix="renderSuffix"

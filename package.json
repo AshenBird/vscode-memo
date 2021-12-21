@@ -2,7 +2,7 @@
 	"name": "notebook",
 	"displayName": "McSwift Notebook",
 	"description": "",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"engines": {
 		"vscode": "^1.63.1"
 	},
@@ -81,7 +81,7 @@
 		"sass": "^1.43.4",
 		"typescript": "^4.4.4",
 		"vite": "^2.6.14",
-		"vite-ssg": "^0.17.0",
+		"vite-ssg": "^0.17.2",
 		"vsce": "^2.5.0",
 		"vue-router": "^4.0.12",
 		"zx": "^4.2.0"

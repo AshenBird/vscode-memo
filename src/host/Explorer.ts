@@ -89,6 +89,12 @@ export class NoteExplorerWebview extends CustomView {
         ) {
           continue;
         }
+        if(name==="drawio_assets"){
+          continue;
+        }
+        if(name.startsWith(".")){
+          continue;
+        }
         r.children.push(
           await this.plant(
             Path.join(path, dirent.name),
@@ -97,6 +103,12 @@ export class NoteExplorerWebview extends CustomView {
           )
         );
       }
+      r.children.sort((a,b)=>{
+        if(a.type===b.type){return 0;};
+        if(a.type==="folder"){return -1;};
+        if(b.type==="folder"){return 1;};
+        return 0;
+      });
     } else {
       r.type = name.split(".").pop() as keyof typeof fileTypes;
     }
