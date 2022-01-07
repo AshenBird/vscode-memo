@@ -15,7 +15,7 @@ export default defineConfig({
   plugins: [vue(), jsx()],
   // @ts-ignore
   ssgOptions: {
-    mock: true
+    mock: true,
   },
   resolve: {
     // 别名
